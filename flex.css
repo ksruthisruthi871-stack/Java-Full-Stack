@@ -1,0 +1,16 @@
+nav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background-color: fuchsia;
+    color:white;
+}
+.meat{
+    flex-direction:column;
+    list-style:circle;
+}
+ul{
+    display:flex;
+    gap:1cm;
+    list-style:square;
+}
