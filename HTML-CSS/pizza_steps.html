@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pizza Steps Viewer</title>
+  <style>
+    body{font-family:Segoe UI, Arial;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:linear-gradient(180deg,#fff7ed,#fff1f2)}
+    .viewer{width:min(720px,95%);background:white;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(15,23,42,0.08);text-align:center}
+    img{max-width:420px;border-radius:12px;border:1px solid #f3e8ff}
+    .controls{display:flex;justify-content:center;gap:10px;margin-top:12px}
+    button{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:#fb7185;color:white;font-weight:700}
+    button[aria-disabled="true"]{opacity:0.5;cursor:default}
+    .caption{margin-top:12px;color:#374151;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="viewer">
+    <h2>Chicken Pizza - Step by Step</h2>
+    <div id="stage">
+      <img id="stepImg" src="images/step0_prep.svg" alt="step" />
+      <div class="caption" id="caption">Step 0: Prepare ingredients & preheat oven</div>
+    </div>
+    <div class="controls">
+      <button id="prevBtn">◀ Prev</button>
+      <button id="nextBtn">Next ▶</button>
+    </div>
+    <p style="margin-top:12px;color:#6b7280">You can right-click an image and save it to use in other places.</p>
+  </div>
+
+  <script>
+    const steps = [
+      {src:'images/step0_prep.svg', caption:'Step 0: Prepare ingredients & preheat oven'},
+      {src:'images/step1_dough.svg', caption:'Step 1: Prepare the dough'},
+      {src:'images/step2_sauce.svg', caption:'Step 2: Spread tomato sauce'},
+      {src:'images/step3_cheese.svg', caption:'Step 3: Add cheese'},
+      {src:'images/step4_chicken.svg', caption:'Step 4: Place cooked chicken pieces'},
+      {src:'images/step5_herbs.svg', caption:'Step 5: Sprinkle herbs'},
+      {src:'images/step6_finish.svg', caption:'Step 6: Bake and serve the chicken pizza'}
+    ];
+    let idx=0;
+    const img=document.getElementById('stepImg');
+    const cap=document.getElementById('caption');
+    const prev=document.getElementById('prevBtn');
+    const next=document.getElementById('nextBtn');
+
+    function render(){
+      img.src=steps[idx].src;
+      cap.textContent=steps[idx].caption;
+      prev.disabled = idx===0; prev.setAttribute('aria-disabled', idx===0);
+      next.disabled = idx===steps.length-1; next.setAttribute('aria-disabled', idx===steps.length-1);
+    }
+
+    prev.addEventListener('click', ()=>{ if(idx>0){idx--;render();}});
+    next.addEventListener('click', ()=>{ if(idx<steps.length-1){idx++;render();}});
+
+    render();
+  </script>
+</body>
+</html>

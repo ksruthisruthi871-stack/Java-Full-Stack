@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chicken Pizza Maker</title>
+  <style>
+    :root{--bg:#fff7ed;--panel:#fff;--accent:#fb7185;--muted:#64748b}
+    body{margin:0;font-family:Inter,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg),#fff1f2);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+    .card{width:min(920px,100%);background:var(--panel);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(15,23,42,0.08)}
+    .row{display:flex;gap:18px}
+    .col{flex:1}
+    .left{width:360px}
+    h1{margin:0 0 6px;color:#111827}
+    p.lead{color:var(--muted);margin:0 0 12px}
+    .input{display:flex;gap:8px;margin-top:12px}
+    input[type=text]{flex:1;padding:10px;border-radius:10px;border:1px solid #eee}
+    button{padding:10px 14px;border-radius:10px;border:none;background:var(--accent);color:white;font-weight:700;cursor:pointer}
+    button.secondary{background:#e2e8f0;color:#0f172a}
+    .panel{background:linear-gradient(180deg,#fff,#fffaf0);padding:14px;border-radius:12px}
+    .ingredients{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .ing{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:white;border:1px solid #f3e8ff;cursor:pointer}
+    .ing.disabled{opacity:0.5;cursor:not-allowed}
+    .arena{height:520px;border-radius:16px;background:linear-gradient(180deg,#fff8f0,#fff1e6);border:4px solid #fcd34d;display:flex;align-items:center;justify-content:center;position:relative}
+    .pizza{width:420px;height:420px;border-radius:50%;background:conic-gradient(#fef3c7 0deg,#fde68a 200deg,#fdd8b8 360deg);position:relative}
+    .topping{position:absolute;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;pointer-events:none;transform:translate(-50%,-50%)}
+    .hud{display:flex;gap:12px;margin-top:12px}
+    .stat{flex:1;padding:10px;border-radius:10px;background:#fff;border:1px solid #f3e8ff;text-align:center}
+    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,0.5);visibility:hidden}
+    .overlay.show{visibility:visible}
+    .modal{background:white;padding:20px;border-radius:12px;max-width:420px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="row">
+      <div class="left col panel">
+        <h1>Chicken Pizza Maker</h1>
+        <p class="lead">Enter your name and prepare the chicken pizza step-by-step. Complete steps in order for best score.</p>
+        <div class="input">
+          <input type="text" id="username" placeholder="Your name" />
+          <button id="beginBtn">Start</button>
+        </div>
+
+        <div style="margin-top:14px" class="panel">
+          <div style="font-weight:700;color:var(--muted)">Ingredients (click to add)</div>
+          <div class="ingredients" id="ingredients">
+            <div class="ing" data-ing="prep"><span>🔪</span><div><div>Prep</div><small>Gather ingredients & preheat</small></div></div>
+            <div class="ing" data-ing="dough"><span>🍞</span><div><div>Dough</div><small>Base</small></div></div>
+            <div class="ing" data-ing="sauce"><span>🍅</span><div><div>Sauce</div><small>Tomato</small></div></div>
+            <div class="ing" data-ing="cheese"><span>🧀</span><div><div>Cheese</div><small>Melt</small></div></div>
+            <div class="ing" data-ing="chicken"><span>🍗</span><div><div>Chicken</div><small>Cooked</small></div></div>
+            <div class="ing" data-ing="herb"><span>🌿</span><div><div>Herb</div><small>Garnish</small></div></div>
+            <div class="ing" data-ing="bake"><span>🔥</span><div><div>Bake</div><small>Finish</small></div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col">
+        <div class="arena" id="arena">
+          <div class="pizza" id="pizza"></div>
+        </div>
+
+        <div class="hud">
+          <div class="stat"><strong>Player</strong><div id="playerName">-</div></div>
+          <div class="stat"><strong>Score</strong><div id="score">0</div></div>
+          <div class="stat"><strong>Misses</strong><div id="misses">0</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="resultTitle">Well done!</h2>
+      <p id="resultText">You finished the pizza.</p>
+      <p style="font-weight:700">Final score: <span id="finalScore">0</span></p>
+      <button id="playAgain">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const order = ['prep','dough','sauce','cheese','chicken','herb','bake'];
+    let placed = [];
+    let score = 0; let misses = 0; let level = 1; let running = false;
+    const pizza = document.getElementById('pizza');
+    const ingredientsEl = document.getElementById('ingredients');
+    const beginBtn = document.getElementById('beginBtn');
+    const usernameInput = document.getElementById('username');
+    const playerNameEl = document.getElementById('playerName');
+    const scoreEl = document.getElementById('score');
+    const missesEl = document.getElementById('misses');
+    const overlay = document.getElementById('overlay');
+    const resultText = document.getElementById('resultText');
+    const finalScore = document.getElementById('finalScore');
+    const playAgain = document.getElementById('playAgain');
+
+    function randPos(){
+      const r = 140 * Math.sqrt(Math.random());
+      const angle = Math.random()*Math.PI*2;
+      const cx = 210; const cy = 210;
+      const x = cx + r*Math.cos(angle);
+      const y = cy + r*Math.sin(angle);
+      return {x,y};
+    }
+
+    function placeTopping(type,emoji){
+      const pos = randPos();
+      const node = document.createElement('div');
+      node.className = 'topping';
+      node.style.left = pos.x + 'px'; node.style.top = pos.y + 'px'; node.textContent = emoji;
+      pizza.appendChild(node);
+      node.animate([{transform:'scale(0)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});
+    }
+
+    function updateHUD(){ scoreEl.textContent = score; missesEl.textContent = misses; }
+
+    function resetPizza(){ placed = []; score = 0; misses = 0; running = false; pizza.querySelectorAll('.topping').forEach(n=>n.remove()); updateHUD(); }
+
+    function startGame(){
+      const name = usernameInput.value.trim() || 'Player';
+      playerNameEl.textContent = name;
+      resetPizza(); running = true; document.querySelectorAll('.ing').forEach(el=>el.classList.remove('disabled'));
+      beginBtn.disabled = true; usernameInput.disabled = true;
+      alert('Game started! Follow the steps in order to make the pizza.');
+    }
+
+    function endGame(finish){ running = false; overlay.classList.add('show'); resultText.textContent = finish; finalScore.textContent = score; }
+
+    ingredientsEl.addEventListener('click', (e)=>{
+      if(!running) return;
+      const ing = e.target.closest('.ing'); if(!ing) return;
+      const type = ing.dataset.ing;
+      handleIngredient(type);
+    });
+
+    function handleIngredient(type){
+      const next = order[placed.length];
+      if(type===next){
+        // correct
+        placed.push(type);
+        const map = {prep:'🔪',dough:'🍞',sauce:'🍅',cheese:'🧀',chicken:'🍗',herb:'🌿',bake:'🔥'};
+        placeTopping(type,map[type]);
+        score += 10;
+        if(type==='bake') score += 30; // bonus
+        if(placed.length===order.length){ endGame('Pizza complete! Great job.'); }
+      } else {
+        misses +=1; score = Math.max(0, score-5);
+        if(misses>=3){ endGame('Too many mistakes.'); }
+      }
+      updateHUD();
+    }
+
+    beginBtn.addEventListener('click', startGame);
+    playAgain.addEventListener('click', ()=>{ overlay.classList.remove('show'); usernameInput.disabled=false; beginBtn.disabled=false; resetPizza(); });
+
+    // initialize
+    resetPizza();
+  </script>
+</body>
+</html>
