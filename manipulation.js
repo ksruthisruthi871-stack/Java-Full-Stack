@@ -8,5 +8,6 @@ let wish=document.querySelector("#content");
 console.log(wish);
 let water=document.querySelectorAll("p");
 console.log(water);*/
-let value=documengt.getElementById("h3");
-value.innerText="happy birthday komala";
+let value1=documengt.getElementById("wish");
+value1.innerHTML="happy birthday dia";
+value.style.fontSize="50px";
